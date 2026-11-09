@@ -1,0 +1,885 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kudlife">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="robots" content="noindex,nofollow">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Kudlife</title>
+<style>
+/* Kudlife · jedna appka nad Úkoly, Pipeline, Školou a Financemi. Stejný iOS jazyk jako ostatní appky. */
+:root{
+  --bg:#F2F2F7;--bg2:#FFFFFF;--label:#000;--label2:rgba(60,60,67,.6);--label3:rgba(60,60,67,.3);--sep:rgba(60,60,67,.18);
+  --fill:rgba(120,120,128,.12);--fill2:rgba(120,120,128,.07);--tint:#007AFF;--crit:#D70015;--warn:#C93400;
+  --bar:rgba(242,242,247,.82);--seg:#fff;--shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px -14px rgba(0,0,0,.22);
+  --f:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --sw:calc(52px + env(safe-area-inset-top,0px));
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#000;--bg2:#1C1C1E;--label:#fff;--label2:rgba(235,235,245,.6);--label3:rgba(235,235,245,.3);--sep:rgba(84,84,88,.65);
+  --fill:rgba(120,120,128,.24);--fill2:rgba(120,120,128,.14);--tint:#0A84FF;--crit:#FF453A;--warn:#FF9F0A;
+  --bar:rgba(0,0,0,.75);--seg:#636366;--shadow:none;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--label);font:400 16px/1.4 var(--f);letter-spacing:-.01em;-webkit-font-smoothing:antialiased;overflow:hidden}
+button,input,select,textarea{font:inherit;letter-spacing:inherit;color:inherit}
+button{cursor:pointer;-webkit-appearance:none;appearance:none;background:none;border:0;padding:0}
+:focus-visible{outline:2px solid var(--tint);outline-offset:2px;border-radius:6px}
+[hidden]{display:none!important}
+
+/* ---------- přepínač appek (nahoře, ať se nepere se spodními lištami vložených appek) ---------- */
+.sw{position:fixed;inset:0 0 auto 0;z-index:30;height:var(--sw);padding:env(safe-area-inset-top,0px) max(10px,env(safe-area-inset-right,0px)) 0 max(10px,env(safe-area-inset-left,0px));
+  background:var(--bar);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-bottom:.5px solid var(--sep);display:flex;align-items:center;gap:10px}
+.logo{font-weight:800;font-size:17px;letter-spacing:-.03em;white-space:nowrap;display:flex;align-items:center;gap:7px}
+.logo i{width:24px;height:24px;border-radius:7px;background:linear-gradient(160deg,#5E5CE6,#0A84FF);display:grid;place-items:center;color:#fff;font-style:normal;font-size:14px;font-weight:800}
+.seg{flex:1;max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);background:var(--fill);padding:2px;border-radius:10px}
+.seg button{position:relative;padding:6px 4px;border-radius:8px;font-weight:600;font-size:13.5px;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:5px}
+.seg button[aria-current="page"]{background:var(--seg);box-shadow:0 1px 3px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.04)}
+.seg svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.seg .bdg{min-width:17px;height:17px;padding:0 5px;border-radius:9px;background:var(--crit);color:#fff;font-size:11px;font-weight:700;line-height:17px}
+.swr{width:34px;flex:none}
+@media (max-width:520px){.logo{display:none}.swr{display:none}.seg{max-width:none}.seg svg{display:none}}
+
+/* ---------- appky ---------- */
+.view{position:fixed;inset:var(--sw) 0 0 0;display:none}
+.view.on{display:block}
+.frame{background:var(--bg);padding-bottom:env(safe-area-inset-bottom,0px)}
+.frame iframe{width:100%;height:100%;border:0;display:block;background:var(--bg)}
+.ov{position:absolute;inset:0;display:grid;place-items:center;padding:24px;background:var(--bg);text-align:center}
+.ov .card{max-width:380px;background:var(--bg2);border-radius:16px;padding:24px 22px;box-shadow:var(--shadow)}
+.ov h3{margin:0 0 6px;font-size:20px;letter-spacing:-.02em}
+.ov p{margin:0 0 16px;color:var(--label2);font-size:15px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;border-radius:12px;background:var(--tint);color:#fff;font-weight:600;text-decoration:none}
+.btn.sec{background:var(--fill);color:var(--tint)}
+.btn.del{background:var(--fill);color:var(--crit)}
+.spin{width:26px;height:26px;border-radius:50%;border:3px solid var(--fill);border-top-color:var(--tint);animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(1turn)}}
+
+/* ---------- Úkoly ---------- */
+#v-todo{display:none}
+#v-todo.on{display:grid;grid-template-columns:1fr}
+.pane{overflow:auto;-webkit-overflow-scrolling:touch;padding:0 max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));height:100%}
+.side{display:block}
+.main{display:none;position:relative;padding-bottom:0}
+#v-todo.list .side{display:none}
+#v-todo.list .main{display:flex;flex-direction:column}
+@media (min-width:860px){
+  #v-todo.on{grid-template-columns:320px 1fr}
+  #v-todo .side,#v-todo.list .side{display:block;border-right:.5px solid var(--sep)}
+  #v-todo .main{display:flex;flex-direction:column}
+  .back{display:none!important}
+  .smart .card.cur,.lists .row.cur{outline:2px solid var(--tint);outline-offset:-2px}
+}
+.lt{font-size:34px;line-height:1.1;font-weight:700;letter-spacing:-.025em;margin:18px 2px 14px;display:flex;align-items:center;gap:10px}
+.lt .sp{flex:1}
+.ib{width:34px;height:34px;border-radius:50%;background:var(--fill);display:grid;place-items:center;color:var(--tint);flex:none}
+.ib svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.smart{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.smart .card{background:var(--bg2);border-radius:13px;padding:10px 12px 10px;text-align:left;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto;row-gap:6px;box-shadow:var(--shadow)}
+.smart .ic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--c)}
+.smart .ic svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.smart .n{font-size:26px;font-weight:700;line-height:30px;text-align:right}
+.smart .l{grid-column:1/-1;font-weight:600;color:var(--label2);font-size:15px}
+.sh{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:26px 4px 8px}
+.grp{background:var(--bg2);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+.row{display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;text-align:left;position:relative}
+.row+.row::before{content:"";position:absolute;top:0;left:56px;right:0;border-top:.5px solid var(--sep)}
+.row .dot{width:30px;height:30px;border-radius:50%;background:var(--c);display:grid;place-items:center;color:#fff;flex:none}
+.row .dot svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .ct{color:var(--label2)}
+.row .chev{width:8px;height:13px;color:var(--label3)}
+.addl{margin:12px 4px 0;color:var(--tint);font-weight:600;display:flex;align-items:center;gap:6px;padding:6px 0}
+.sync{margin:22px 4px 6px;font-size:13px;color:var(--label2);display:flex;align-items:center;gap:6px}
+.sync .d{width:8px;height:8px;border-radius:50%;background:var(--label3)}
+.sync.ok .d{background:#34C759}.sync.warn .d{background:#FF9500}.sync.err .d{background:var(--crit)}
+
+.mh{display:flex;align-items:center;gap:8px;padding-top:6px}
+.back{display:flex;align-items:center;gap:2px;color:var(--tint);font-size:17px;padding:8px 0}
+.back svg{width:12px;height:20px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.mh .sp{flex:1}
+.ttl{color:var(--c);font-size:32px;font-weight:700;letter-spacing:-.025em;margin:6px 2px 6px}
+.tasks{flex:1}
+.gh{font-size:15px;font-weight:700;margin:18px 4px 6px;color:var(--label)}
+.gh.over{color:var(--crit)}
+.gh small{font-weight:500;color:var(--label2);margin-left:6px}
+.task{display:flex;align-items:flex-start;gap:12px;padding:10px 4px 10px 2px;position:relative;transition:opacity .35s}
+.task+.task::before{content:"";position:absolute;top:0;left:40px;right:0;border-top:.5px solid var(--sep)}
+.task.gone{opacity:.35}
+.chk{width:24px;height:24px;border-radius:50%;border:2px solid var(--label3);flex:none;margin-top:1px;display:grid;place-items:center;transition:background .15s,border-color .15s}
+.chk svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.task.done .chk,.chk:active{background:var(--c);border-color:var(--c)}
+.task.done .chk svg{opacity:1}
+.task.done .tt{color:var(--label2)}
+.tx{flex:1;min-width:0;text-align:left;cursor:pointer}
+.tt{word-wrap:break-word}
+.tt b{color:var(--c);font-weight:700;margin-right:4px}
+.meta{font-size:13.5px;color:var(--label2);display:flex;flex-wrap:wrap;gap:2px 10px;margin-top:1px}
+.meta .over{color:var(--crit);font-weight:500}
+.meta .today{color:var(--tint);font-weight:500}
+.meta svg{width:12px;height:12px;vertical-align:-1px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.flag{color:#FF9500;flex:none;margin-top:2px}
+.flag svg{width:16px;height:16px;fill:currentColor}
+.empty{text-align:center;color:var(--label2);padding:48px 16px}
+.empty b{display:block;font-size:20px;color:var(--label);margin-bottom:4px}
+.showdone{color:var(--tint);font-weight:600;margin:16px 4px;font-size:15px}
+
+.qa{position:sticky;bottom:0;margin:8px calc(-1*max(16px,env(safe-area-inset-left,0px))) 0;padding:8px max(16px,env(safe-area-inset-left,0px)) calc(10px + env(safe-area-inset-bottom,0px));
+  background:var(--bar);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-top:.5px solid var(--sep)}
+.qa form{display:flex;gap:8px;align-items:center}
+.qa input{flex:1;min-width:0;border:0;border-radius:11px;background:var(--bg2);padding:11px 14px;font-size:16px;outline:none;box-shadow:inset 0 0 0 .5px var(--sep)}
+.qa button{width:40px;height:40px;border-radius:50%;background:var(--tint);color:#fff;display:grid;place-items:center;flex:none}
+.qa button:disabled{opacity:.35}
+.qa button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;min-height:0}
+.chips:empty{display:none}
+.chip{font-size:12.5px;font-weight:600;padding:3px 9px;border-radius:20px;background:var(--fill);color:var(--label2)}
+.hint{font-size:12px;color:var(--label3);margin-top:6px}
+
+/* ---------- sheety ---------- */
+dialog{border:0;padding:0;background:var(--bg);color:var(--label);border-radius:14px;width:min(520px,100vw - 24px);max-height:calc(100dvh - 40px);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+@media (max-width:600px){dialog{width:100vw;max-width:100vw;margin:auto 0 0;border-radius:14px 14px 0 0;padding-bottom:env(safe-area-inset-bottom,0px)}}
+.dh{display:flex;align-items:center;padding:12px 16px;border-bottom:.5px solid var(--sep);position:sticky;top:0;background:var(--bg);z-index:1}
+.dh h2{flex:1;text-align:center;font-size:17px;margin:0}
+.dh button{color:var(--tint);font-size:17px;min-width:64px;text-align:left}
+.dh button.r{text-align:right;font-weight:600}
+.db{padding:14px 16px 22px;overflow:auto}
+.f{background:var(--bg2);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.f>*+*{border-top:.5px solid var(--sep)}
+.f input[type=text],.f textarea{width:100%;border:0;background:none;padding:12px 14px;font-size:16px;outline:none;resize:vertical}
+.f textarea{min-height:80px}
+.fr{display:flex;align-items:center;gap:10px;padding:8px 14px;min-height:46px}
+.fr label{flex:1}
+.fr input[type=date],.fr input[type=time],.fr select{border:0;background:var(--fill);border-radius:8px;padding:6px 10px;font-size:15px;max-width:60%}
+.fr .x{color:var(--label3);font-size:20px;line-height:1;padding:0 4px}
+.pr{display:flex;background:var(--fill);border-radius:9px;padding:2px}
+.pr button{padding:4px 11px;border-radius:7px;font-size:14px;font-weight:600}
+.pr button[aria-pressed="true"]{background:var(--seg);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.tg{position:relative;width:51px;height:31px;flex:none}
+.tg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;z-index:1}
+.tg span{position:absolute;inset:0;border-radius:16px;background:var(--fill);transition:background .2s}
+.tg span::after{content:"";position:absolute;left:2px;top:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.2);transition:transform .2s}
+.tg input:checked+span{background:#34C759}
+.tg input:checked+span::after{transform:translateX(20px)}
+.cols{display:flex;flex-wrap:wrap;gap:12px;padding:12px 14px}
+.cols button{width:34px;height:34px;border-radius:50%;background:var(--c)}
+.cols button[aria-pressed="true"]{box-shadow:0 0 0 3px var(--bg2),0 0 0 5px var(--c)}
+.note{font-size:13px;color:var(--label2);margin:-8px 6px 16px;line-height:1.4}
+.acts{display:flex;flex-direction:column;gap:10px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;z-index:60;
+  background:rgba(30,30,32,.94);color:#fff;border-radius:14px;padding:11px 14px 11px 16px;display:flex;align-items:center;gap:14px;font-size:15px;transition:all .25s;max-width:calc(100vw - 32px)}
+.toast.on{opacity:1;transform:translateX(-50%);pointer-events:auto}
+.toast button{color:#64D2FF;font-weight:600}
+</style>
+</head>
+<body>
+
+<header class="sw">
+  <div class="logo"><i>K</i>Kudlife</div>
+  <nav class="seg" id="seg" aria-label="Appky">
+    <button data-app="todo"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>Úkoly<span class="bdg" id="bdg" hidden></span></button>
+    <button data-app="pipeline"><svg viewBox="0 0 24 24"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg>Pipeline</button>
+    <button data-app="skola"><svg viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg>Škola</button>
+    <button data-app="finance"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M16 15h2"/></svg>Finance</button>
+  </nav>
+  <div class="swr"></div>
+</header>
+
+<!-- ÚKOLY -->
+<section class="view" id="v-todo">
+  <div class="pane side" id="side"></div>
+  <div class="pane main" id="main"></div>
+</section>
+<section class="view frame" id="v-pipeline"></section>
+<section class="view frame" id="v-skola"></section>
+<section class="view frame" id="v-finance"></section>
+
+<!-- úprava úkolu -->
+<dialog id="taskDlg">
+  <div class="dh"><button type="button" data-close>Zrušit</button><h2>Podrobnosti</h2><button type="button" class="r" id="tSave">Hotovo</button></div>
+  <div class="db">
+    <div class="f">
+      <input type="text" id="tTitle" placeholder="Název" autocomplete="off">
+      <textarea id="tNotes" placeholder="Poznámky"></textarea>
+    </div>
+    <div class="f">
+      <div class="fr"><label for="tDue">Datum</label><input type="date" id="tDue"><button type="button" class="x" data-clear="tDue" aria-label="Smazat datum">×</button></div>
+      <div class="fr"><label for="tTime">Čas</label><input type="time" id="tTime"><button type="button" class="x" data-clear="tTime" aria-label="Smazat čas">×</button></div>
+      <div class="fr"><label for="tRep">Opakovat</label><select id="tRep"><option value="">Nikdy</option><option value="d">Každý den</option><option value="wd">Každý pracovní den</option><option value="w">Každý týden</option><option value="m">Každý měsíc</option></select></div>
+    </div>
+    <div class="f">
+      <div class="fr"><label for="tList">Seznam</label><select id="tList"></select></div>
+      <div class="fr"><label>Priorita</label><div class="pr" id="tPrio"><button type="button" data-p="0">–</button><button type="button" data-p="1">!</button><button type="button" data-p="2">!!</button><button type="button" data-p="3">!!!</button></div></div>
+      <div class="fr"><label for="tFlag">S vlajkou</label><span class="tg"><input type="checkbox" id="tFlag"><span></span></span></div>
+    </div>
+    <div class="acts"><button type="button" class="btn del" id="tDel">Smazat úkol</button></div>
+  </div>
+</dialog>
+
+<!-- seznam -->
+<dialog id="listDlg">
+  <div class="dh"><button type="button" data-close>Zrušit</button><h2 id="lHead">Nový seznam</h2><button type="button" class="r" id="lSave">Hotovo</button></div>
+  <div class="db">
+    <div class="f"><input type="text" id="lName" placeholder="Název seznamu" autocomplete="off"></div>
+    <div class="f"><div class="cols" id="lCols"></div></div>
+    <div class="acts"><button type="button" class="btn del" id="lDel">Smazat seznam</button></div>
+  </div>
+</dialog>
+
+<!-- nastavení -->
+<dialog id="setDlg">
+  <div class="dh"><button type="button" data-close>Zavřít</button><h2>Kudlife</h2><span style="min-width:64px"></span></div>
+  <div class="db">
+    <div class="f">
+      <div class="fr"><label>Google Disk</label><span id="gState" class="muted" style="color:var(--label2)"></span></div>
+    </div>
+    <p class="note">Úkoly se ukládají v zařízení. Po přihlášení se synchronizují přes soubor „Kudlife – úkoly.json“ na tvém Disku, takže je máš na iPhonu i na Macu.</p>
+    <div class="acts" style="margin-bottom:22px">
+      <button type="button" class="btn" id="gLogin">Přihlásit přes Google</button>
+      <button type="button" class="btn sec" id="gSync" hidden>Synchronizovat teď</button>
+      <button type="button" class="btn del" id="gOut" hidden>Odhlásit Disk</button>
+    </div>
+    <div class="acts">
+      <button type="button" class="btn sec" id="xExp">Stáhnout zálohu (JSON)</button>
+      <button type="button" class="btn sec" id="xImp">Nahrát zálohu</button>
+      <input type="file" id="xFile" accept="application/json,.json" hidden>
+    </div>
+    <p class="note" style="margin-top:18px">Rychlé zadání: „Zavolat Mirkovi zítra 14:00 !! #práce“ · dnes, zítra, pozítří, v pondělí…, 15.11., každý den / týden / měsíc.</p>
+  </div>
+</dialog>
+
+<div class="toast" id="toast"><span id="toastT"></span><button type="button" id="toastB" hidden>Zpět</button></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   Kudlife
+   - Úkoly: vlastní appka, data v localStorage, synchronizace přes Google Disk (drive.file)
+   - Škola, Finance: stejná doména (kudla2002.github.io) → vložené přes iframe, sdílí přihlášení i data
+   - Pipeline: jiná doména (zfpconsulting.github.io) → prohlížeč jí uvnitř Kudlife nedá k datům, otevírá se zvlášť
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const ls = {
+  get(k, d) { try { const v = localStorage.getItem('kudlife.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('kudlife.' + k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem('kudlife.' + k); } catch (e) {} },
+};
+const ss = {
+  get(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} },
+  del(k) { try { sessionStorage.removeItem(k); } catch (e) {} },
+};
+
+/* ---------- toast ---------- */
+let toastTimer;
+function toast(msg, undo) {
+  $('toastT').textContent = msg;
+  const b = $('toastB'); b.hidden = !undo; b.onclick = () => { hideToast(); undo(); };
+  $('toast').classList.add('on');
+  clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, undo ? 5000 : 3000);
+}
+function hideToast() { $('toast').classList.remove('on'); }
+
+/* =====================================================================
+   DATUM
+   ===================================================================== */
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const parseYmd = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (s, n) => { const d = parseYmd(s); d.setDate(d.getDate() + n); return ymd(d); };
+const today = () => ymd(new Date());
+const DOW = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
+function fmtDue(s) {
+  const t = today(), diff = Math.round((parseYmd(s) - parseYmd(t)) / 864e5);
+  if (diff === 0) return 'Dnes';
+  if (diff === 1) return 'Zítra';
+  if (diff === -1) return 'Včera';
+  if (diff > 1 && diff < 7) return DOW[parseYmd(s).getDay()].replace(/^./, c => c.toUpperCase());
+  const d = parseYmd(s);
+  return d.getDate() + '. ' + (d.getMonth() + 1) + '.' + (d.getFullYear() !== new Date().getFullYear() ? ' ' + d.getFullYear() : '');
+}
+function nextDue(s, rep) {
+  const base = s || today();
+  if (rep === 'd') return addDays(base, 1);
+  if (rep === 'w') return addDays(base, 7);
+  if (rep === 'wd') { let n = addDays(base, 1); while ([0, 6].includes(parseYmd(n).getDay())) n = addDays(n, 1); return n; }
+  if (rep === 'm') { const d = parseYmd(base), day = d.getDate(); d.setDate(1); d.setMonth(d.getMonth() + 1); d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate())); return ymd(d); }
+  return null;
+}
+
+/* =====================================================================
+   DATA
+   ===================================================================== */
+const KEY = 'todo.v1';
+const COLORS = ['#007AFF', '#FF9500', '#34C759', '#FF3B30', '#AF52DE', '#FF2D55', '#5AC8FA', '#FFCC00', '#A2845E', '#8E8E93'];
+function blank() {
+  const n = Date.now();
+  return {
+    v: 1,
+    lists: [
+      { id: 'osobni', name: 'Osobní', color: '#007AFF', order: 0, upd: n },
+      { id: 'prace', name: 'Práce', color: '#FF9500', order: 1, upd: n },
+      { id: 'skola', name: 'Škola', color: '#34C759', order: 2, upd: n },
+    ],
+    tasks: [],
+  };
+}
+let D = ls.get(KEY, null) || blank();
+const lists = () => D.lists.filter(l => !l.del).sort((a, b) => a.order - b.order);
+const tasks = () => D.tasks.filter(t => !t.del);
+const listById = id => D.lists.find(l => l.id === id && !l.del) || lists()[0];
+
+function persist(skipSync) {
+  ls.set(KEY, D);
+  if (!skipSync) Sync.soon();
+  render();
+}
+function touch(o) { o.upd = Date.now(); return o; }
+
+/* sloučení dvou verzí (zařízení × Disk): po položkách, vyhrává novější úprava; smazané zůstanou jako náhrobek 60 dní */
+function merge(a, b) {
+  if (!b || !Array.isArray(b.tasks)) return a;
+  const m = (x, y) => {
+    const map = new Map();
+    [...(x || []), ...(y || [])].forEach(o => { if (!o || !o.id) return; const c = map.get(o.id); if (!c || (o.upd || 0) > (c.upd || 0)) map.set(o.id, o); });
+    const cut = Date.now() - 60 * 864e5;
+    return [...map.values()].filter(o => !(o.del && (o.upd || 0) < cut));
+  };
+  return { v: 1, lists: m(a.lists, b.lists), tasks: m(a.tasks, b.tasks) };
+}
+
+/* ---------- operace ---------- */
+function addTask(t) {
+  const n = Date.now();
+  const o = Object.assign({ id: uid(), title: '', notes: '', due: null, time: null, prio: 0, flag: false, list: lists()[0].id, rep: null, done: false, doneAt: null, created: n, upd: n }, t);
+  D.tasks.push(o); persist(); return o;
+}
+function toggleDone(id) {
+  const t = D.tasks.find(x => x.id === id); if (!t) return;
+  if (!t.done) {
+    t.done = true; t.doneAt = Date.now(); touch(t);
+    let nxt = null;
+    if (t.rep) {
+      nxt = Object.assign({}, t, { id: uid(), done: false, doneAt: null, due: nextDue(t.due, t.rep), created: Date.now(), upd: Date.now() });
+      D.tasks.push(nxt);
+    }
+    persist();
+    toast(nxt ? 'Hotovo · další ' + fmtDue(nxt.due).toLowerCase() : 'Hotovo', () => {
+      t.done = false; t.doneAt = null; touch(t);
+      if (nxt) { nxt.del = true; touch(nxt); }
+      persist();
+    });
+  } else { t.done = false; t.doneAt = null; touch(t); persist(); }
+}
+function delTask(id) {
+  const t = D.tasks.find(x => x.id === id); if (!t) return;
+  t.del = true; touch(t); persist();
+  toast('Úkol smazán', () => { t.del = false; touch(t); persist(); });
+}
+
+/* =====================================================================
+   RYCHLÉ ZADÁNÍ (česky)
+   ===================================================================== */
+const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const DAYS = [['nedeli', 'nedele'], ['pondeli'], ['utery'], ['stredu', 'streda', 'stredy'], ['ctvrtek', 'ctvrtka'], ['patek', 'patku'], ['sobotu', 'sobota', 'soboty']];
+function parseQuick(raw, ctx) {
+  let s = ' ' + raw + ' ';
+  const r = { due: ctx.due || null, time: null, prio: 0, list: ctx.list || null, rep: null, flag: !!ctx.flag };
+  const cut = re => { const m = s.match(re); if (m) s = s.replace(m[0], ' '); return m; };
+  const N = () => norm(s);
+  // opakování
+  let m;
+  const rep = [[/\s(kazdy\s+den|denne)(?=\s)/, 'd'], [/\s(kazdy\s+pracovni\s+den|v\s+pracovni\s+dny)(?=\s)/, 'wd'], [/\s(kazdy\s+tyden|tydne)(?=\s)/, 'w'], [/\s(kazdy\s+mesic|mesicne)(?=\s)/, 'm']];
+  for (const [re, v] of rep) { m = N().match(re); if (m) { s = s.slice(0, m.index) + ' ' + s.slice(m.index + m[0].length); r.rep = v; break; } }
+  // relativní dny
+  const rel = [[/\s(dnes|dneska)(?=\s)/, 0], [/\s(zitra)(?=\s)/, 1], [/\s(pozitri)(?=\s)/, 2]];
+  for (const [re, v] of rel) { m = N().match(re); if (m) { s = s.slice(0, m.index) + ' ' + s.slice(m.index + m[0].length); r.due = addDays(today(), v); break; } }
+  // dny v týdnu: „v pondělí“, „ve středu“, „v sobotu“
+  m = N().match(/\s(?:v|ve|do)\s+(pondeli|utery|stredu|streda|stredy|ctvrtek|ctvrtka|patek|patku|sobotu|sobota|soboty|nedeli|nedele)(?=\s)/);
+  if (m) {
+    const w = DAYS.findIndex(a => a.includes(m[1]));
+    let d = new Date(); d.setDate(d.getDate() + ((w - d.getDay() + 7) % 7 || 7));
+    r.due = ymd(d); s = s.slice(0, m.index) + ' ' + s.slice(m.index + m[0].length);
+  }
+  // datum 15.11. / 15. 11. 2026
+  m = cut(/\s(\d{1,2})\.\s?(\d{1,2})\.(?:\s?(\d{4}|\d{2}))?(?=\s)/);
+  if (m) {
+    const now = new Date(); let y = m[3] ? +(m[3].length === 2 ? '20' + m[3] : m[3]) : now.getFullYear();
+    let d = new Date(y, +m[2] - 1, +m[1]);
+    if (!m[3] && ymd(d) < today()) d = new Date(y + 1, +m[2] - 1, +m[1]);
+    if (!isNaN(d)) r.due = ymd(d);
+  }
+  // čas 14:00 / v 9:30
+  m = cut(/\s(?:v\s+|ve\s+)?([01]?\d|2[0-3]):([0-5]\d)(?=\s)/);
+  if (m) { r.time = pad(+m[1]) + ':' + m[2]; if (!r.due) r.due = today(); }
+  // priorita
+  m = cut(/\s(!{1,3})(?=\s)/); if (m) r.prio = m[1].length;
+  // seznam #práce
+  m = s.match(/\s#([^\s#]+)(?=\s)/);
+  if (m) {
+    const q = norm(m[1]); const l = lists().find(x => norm(x.name) === q) || lists().find(x => norm(x.name).startsWith(q));
+    if (l) { r.list = l.id; s = s.replace(m[0], ' '); }
+  }
+  r.title = s.replace(/\s+/g, ' ').trim();
+  return r;
+}
+
+/* =====================================================================
+   VYKRESLENÍ ÚKOLŮ
+   ===================================================================== */
+const SMART = {
+  today: { name: 'Dnes', color: '#007AFF', icon: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>', f: t => !t.done && t.due && t.due <= today() },
+  planned: { name: 'Naplánované', color: '#FF3B30', icon: '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>', f: t => !t.done && t.due },
+  all: { name: 'Vše', color: '#3A3A3C', icon: '<path d="M4 7h16M4 12h16M4 17h16"/>', f: t => !t.done },
+  flag: { name: 'S vlajkou', color: '#FF9500', icon: '<path d="M6 21V4h11l-2 4 2 4H6"/>', f: t => !t.done && t.flag },
+  done: { name: 'Hotové', color: '#8E8E93', icon: '<path d="M5 12l5 5 9-10"/>', f: t => t.done },
+};
+let cur = ls.get('view', 'today');           // 'today' | 'planned' | 'all' | 'flag' | 'done' | 'l:<id>'
+let showDone = false;
+let mobileList = false;                       // na mobilu: jsme v detailu seznamu?
+
+const prioMark = p => p ? '<b>' + '!'.repeat(p) + '</b>' : '';
+const sortT = (a, b) =>
+  (a.due || '9999') .localeCompare(b.due || '9999') || (a.time || '99').localeCompare(b.time || '99') || (b.prio - a.prio) || (a.created - b.created);
+
+function taskRow(t, showList) {
+  const l = listById(t.list), meta = [];
+  if (t.due) {
+    const cls = !t.done && t.due < today() ? 'over' : t.due === today() ? 'today' : '';
+    meta.push('<span class="' + cls + '">' + fmtDue(t.due) + (t.time ? ' ' + t.time : '') + '</span>');
+  }
+  if (t.rep) meta.push('<span><svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg></span>');
+  if (showList) meta.push('<span>' + esc(l.name) + '</span>');
+  if (t.notes) meta.push('<span>' + esc(t.notes.split('\n')[0].slice(0, 60)) + '</span>');
+  return '<div class="task' + (t.done ? ' done' : '') + '" data-id="' + t.id + '" style="--c:' + l.color + '">' +
+    '<button class="chk" type="button" aria-label="' + (t.done ? 'Vrátit' : 'Hotovo') + '"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></button>' +
+    '<div class="tx" role="button" tabindex="0"><div class="tt">' + prioMark(t.prio) + esc(t.title) + '</div>' + (meta.length ? '<div class="meta">' + meta.join('') + '</div>' : '') + '</div>' +
+    (t.flag ? '<span class="flag"><svg viewBox="0 0 24 24"><path d="M6 21V4h11l-2 4 2 4H6z"/></svg></span>' : '') + '</div>';
+}
+
+function renderSide() {
+  const T = tasks();
+  let h = '<div class="lt">Úkoly<span class="sp"></span><button class="ib" id="setBtn" type="button" aria-label="Nastavení"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></div>';
+  h += '<div class="smart">';
+  for (const k of ['today', 'planned', 'all', 'flag']) {
+    const s = SMART[k];
+    h += '<button type="button" class="card' + (cur === k ? ' cur' : '') + '" data-view="' + k + '" style="--c:' + s.color + '"><span class="ic"><svg viewBox="0 0 24 24">' + s.icon + '</svg></span><span class="n">' + T.filter(s.f).length + '</span><span class="l">' + s.name + '</span></button>';
+  }
+  h += '</div><div class="sh">Moje seznamy</div><div class="grp lists">';
+  for (const l of lists()) {
+    const n = T.filter(t => !t.done && t.list === l.id).length;
+    h += '<button type="button" class="row' + (cur === 'l:' + l.id ? ' cur' : '') + '" data-view="l:' + l.id + '" style="--c:' + l.color + '"><span class="dot"><svg viewBox="0 0 24 24"><path d="M8 7h11M8 12h11M8 17h11M4 7h.01M4 12h.01M4 17h.01"/></svg></span><span class="nm">' + esc(l.name) + '</span><span class="ct">' + n + '</span><svg class="chev" viewBox="0 0 8 13"><path d="M1.5 1.5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>';
+  }
+  h += '<button type="button" class="row" data-view="done" style="--c:#8E8E93"><span class="dot"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span><span class="nm">Hotové</span><svg class="chev" viewBox="0 0 8 13"><path d="M1.5 1.5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>';
+  h += '</div><button type="button" class="addl" id="addList">＋ Přidat seznam</button>';
+  h += '<div class="sync ' + Sync.cls() + '" id="syncLine"><span class="d"></span><span>' + esc(Sync.label()) + '</span></div>';
+  $('side').innerHTML = h;
+}
+
+function viewInfo() {
+  if (cur.startsWith('l:')) {
+    const l = D.lists.find(x => x.id === cur.slice(2) && !x.del);
+    if (!l) { cur = 'today'; return viewInfo(); }
+    return { name: l.name, color: l.color, list: l, f: t => t.list === l.id };
+  }
+  const s = SMART[cur] || SMART.today; return { name: s.name, color: s.color, f: s.f, smart: cur };
+}
+
+function renderMain() {
+  const v = viewInfo(), T = tasks();
+  const keep = document.activeElement && document.activeElement.id === 'qaIn' ? $('qaIn').value : null;
+  let h = '<div class="mh"><button type="button" class="back" id="back"><svg viewBox="0 0 12 20"><path d="M10 2L2 10l8 8"/></svg>Seznamy</button><span class="sp"></span>' +
+    (v.list ? '<button type="button" class="ib" id="editList" aria-label="Upravit seznam"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>' : '') + '</div>';
+  h += '<div class="ttl" style="--c:' + v.color + '">' + esc(v.name) + '</div><div class="tasks">';
+  let body = '';
+  if (v.smart === 'done') {
+    const done = T.filter(t => t.done).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0)).slice(0, 300);
+    body = done.map(t => taskRow(t, true)).join('');
+    if (!done.length) body = '<div class="empty"><b>Zatím nic</b>Hotové úkoly se ukážou tady.</div>';
+  } else if (v.smart === 'today') {
+    const open = T.filter(v.f).sort(sortT), over = open.filter(t => t.due < today()), td = open.filter(t => t.due === today());
+    if (over.length) body += '<div class="gh over">Po termínu<small>' + over.length + '</small></div>' + over.map(t => taskRow(t, true)).join('');
+    if (td.length || !over.length) body += (over.length ? '<div class="gh">Dnes</div>' : '') + td.map(t => taskRow(t, true)).join('');
+    if (!open.length) body = '<div class="empty"><b>Na dnešek nic</b>Přidej úkol dole, nebo si užij volno.</div>';
+  } else if (v.smart === 'planned') {
+    const open = T.filter(v.f).sort(sortT); let last = '';
+    for (const t of open) {
+      const g = t.due < today() ? 'Po termínu' : fmtDue(t.due);
+      if (g !== last) { body += '<div class="gh' + (g === 'Po termínu' ? ' over' : '') + '">' + esc(g) + '</div>'; last = g; }
+      body += taskRow(t, true);
+    }
+    if (!open.length) body = '<div class="empty"><b>Nic naplánovaného</b>Úkoly s datem se ukážou tady.</div>';
+  } else {
+    const all = T.filter(v.f), open = all.filter(t => !t.done).sort(sortT), done = all.filter(t => t.done).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));
+    body = open.map(t => taskRow(t, !v.list)).join('');
+    if (!open.length) body = '<div class="empty"><b>Hotovo</b>' + (v.list ? 'V seznamu nic nečeká.' : 'Žádné otevřené úkoly.') + '</div>';
+    if (v.list && done.length) {
+      body += '<button type="button" class="showdone" id="showDone">' + (showDone ? 'Skrýt hotové' : 'Zobrazit hotové (' + done.length + ')') + '</button>';
+      if (showDone) body += done.slice(0, 100).map(t => taskRow(t, false)).join('');
+    }
+  }
+  h += body + '</div>';
+  if (v.smart !== 'done') {
+    const ph = v.list ? 'Nový úkol do „' + v.name + '“' : v.smart === 'today' ? 'Nový úkol na dnes' : 'Nový úkol';
+    h += '<div class="qa"><form id="qa" autocomplete="off"><input id="qaIn" enterkeyhint="done" placeholder="' + esc(ph) + '"><button type="submit" id="qaGo" aria-label="Přidat" disabled><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></form><div class="chips" id="chips"></div></div>';
+  }
+  $('main').innerHTML = h;
+  if (keep != null) { const i = $('qaIn'); if (i) { i.value = keep; i.focus(); qaPreview(); } }
+}
+
+function render() {
+  renderSide(); renderMain();
+  $('v-todo').classList.toggle('list', mobileList);
+  const n = tasks().filter(SMART.today.f).length, b = $('bdg');
+  b.hidden = !n; b.textContent = n;
+  try { if (navigator.setAppBadge) n ? navigator.setAppBadge(n) : navigator.clearAppBadge(); } catch (e) {}
+}
+
+function ctx() {
+  const v = viewInfo();
+  return { list: v.list ? v.list.id : null, due: v.smart === 'today' ? today() : null, flag: v.smart === 'flag' };
+}
+function qaPreview() {
+  const i = $('qaIn'), c = $('chips'); if (!i || !c) return;
+  const raw = i.value.trim(); $('qaGo').disabled = !raw;
+  if (!raw) { c.innerHTML = ''; return; }
+  const p = parseQuick(raw, ctx()), ch = [];
+  if (p.due) ch.push('📅 ' + fmtDue(p.due) + (p.time ? ' ' + p.time : ''));
+  if (p.rep) ch.push('🔁 ' + { d: 'denně', wd: 'pracovní dny', w: 'týdně', m: 'měsíčně' }[p.rep]);
+  if (p.prio) ch.push('!'.repeat(p.prio));
+  if (p.list) ch.push('# ' + listById(p.list).name);
+  c.innerHTML = ch.map(x => '<span class="chip">' + esc(x) + '</span>').join('');
+}
+
+/* ---------- události ---------- */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-view]');
+  if (t && t.closest('#v-todo')) { cur = t.dataset.view; ls.set('view', cur); showDone = false; mobileList = true; render(); $('main').scrollTop = 0; return; }
+  if (e.target.closest('#back')) { mobileList = false; render(); return; }
+  if (e.target.closest('#setBtn')) { openSettings(); return; }
+  if (e.target.closest('#addList')) { openList(null); return; }
+  if (e.target.closest('#editList')) { openList(viewInfo().list); return; }
+  if (e.target.closest('#showDone')) { showDone = !showDone; renderMain(); return; }
+  const row = e.target.closest('.task');
+  if (row) {
+    if (e.target.closest('.chk')) {
+      const id = row.dataset.id, t = D.tasks.find(x => x.id === id);
+      if (t && !t.done) { row.classList.add('done', 'gone'); setTimeout(() => toggleDone(id), 380); } else toggleDone(id);
+      return;
+    }
+    if (e.target.closest('.tx')) { openTask(row.dataset.id); return; }
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('tx')) openTask(e.target.closest('.task').dataset.id);
+  if (e.key === 'n' && !e.metaKey && !e.ctrlKey && document.activeElement === document.body && curApp === 'todo') { const i = $('qaIn'); if (i) { e.preventDefault(); i.focus(); } }
+});
+document.addEventListener('input', e => { if (e.target.id === 'qaIn') qaPreview(); });
+document.addEventListener('submit', e => {
+  if (e.target.id !== 'qa') return;
+  e.preventDefault();
+  const raw = $('qaIn').value.trim(); if (!raw) return;
+  const p = parseQuick(raw, ctx());
+  if (!p.title) { toast('Chybí název úkolu'); return; }
+  addTask({ title: p.title, due: p.due, time: p.time, prio: p.prio, rep: p.rep, flag: p.flag, list: p.list || (ctx().list) || lists()[0].id });
+  const i = $('qaIn'); i.value = ''; i.focus(); qaPreview();
+  const tl = document.querySelector('.tasks'); if (tl) tl.lastElementChild && tl.lastElementChild.scrollIntoView({ block: 'nearest' });
+});
+
+/* ---------- detail úkolu ---------- */
+let editing = null;
+function openTask(id) {
+  const t = D.tasks.find(x => x.id === id); if (!t) return;
+  editing = id;
+  $('tTitle').value = t.title; $('tNotes').value = t.notes || '';
+  $('tDue').value = t.due || ''; $('tTime').value = t.time || ''; $('tRep').value = t.rep || '';
+  $('tList').innerHTML = lists().map(l => '<option value="' + l.id + '">' + esc(l.name) + '</option>').join('');
+  $('tList').value = listById(t.list).id;
+  setPrio(t.prio || 0); $('tFlag').checked = !!t.flag;
+  $('taskDlg').showModal();
+}
+function setPrio(p) { $('tPrio').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.p === p))); $('tPrio').dataset.v = p; }
+$('tPrio').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setPrio(+b.dataset.p); });
+document.querySelectorAll('[data-clear]').forEach(b => b.addEventListener('click', () => { $(b.dataset.clear).value = ''; if (b.dataset.clear === 'tDue') $('tTime').value = ''; }));
+$('tSave').addEventListener('click', () => {
+  const t = D.tasks.find(x => x.id === editing);
+  if (t) {
+    const title = $('tTitle').value.trim();
+    if (!title) { toast('Úkol potřebuje název'); return; }
+    Object.assign(t, {
+      title, notes: $('tNotes').value.trim(), due: $('tDue').value || null, time: $('tDue').value ? ($('tTime').value || null) : null,
+      rep: $('tRep').value || null, list: $('tList').value, prio: +$('tPrio').dataset.v || 0, flag: $('tFlag').checked,
+    });
+    touch(t); persist();
+  }
+  $('taskDlg').close();
+});
+$('tDel').addEventListener('click', () => { const id = editing; $('taskDlg').close(); delTask(id); });
+
+/* ---------- seznamy ---------- */
+let editingList = null;
+function openList(l) {
+  editingList = l ? l.id : null;
+  $('lHead').textContent = l ? 'Upravit seznam' : 'Nový seznam';
+  $('lName').value = l ? l.name : '';
+  const col = l ? l.color : COLORS[lists().length % COLORS.length];
+  $('lCols').innerHTML = COLORS.map(c => '<button type="button" style="--c:' + c + '" data-c="' + c + '" aria-pressed="' + (c === col) + '" aria-label="Barva"></button>').join('');
+  $('lCols').dataset.v = col;
+  $('lDel').hidden = !l || lists().length < 2;
+  $('listDlg').showModal(); setTimeout(() => $('lName').focus(), 50);
+}
+$('lCols').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $('lCols').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); $('lCols').dataset.v = b.dataset.c; });
+$('lSave').addEventListener('click', () => {
+  const name = $('lName').value.trim(); if (!name) { toast('Seznam potřebuje název'); return; }
+  if (editingList) { const l = D.lists.find(x => x.id === editingList); Object.assign(l, { name, color: $('lCols').dataset.v }); touch(l); }
+  else { const l = { id: uid(), name, color: $('lCols').dataset.v, order: Math.max(0, ...D.lists.map(x => x.order || 0)) + 1, upd: Date.now() }; D.lists.push(l); cur = 'l:' + l.id; ls.set('view', cur); mobileList = true; }
+  persist(); $('listDlg').close();
+});
+$('lDel').addEventListener('click', () => {
+  const l = D.lists.find(x => x.id === editingList); if (!l) return;
+  const n = tasks().filter(t => t.list === l.id && !t.done).length;
+  if (n && !confirm('Smazat seznam „' + l.name + '“ i s ' + n + ' otevřenými úkoly?')) return;
+  l.del = true; touch(l);
+  tasks().filter(t => t.list === l.id).forEach(t => { t.del = true; touch(t); });
+  cur = 'today'; ls.set('view', cur); mobileList = false;
+  persist(); $('listDlg').close();
+});
+$('lName').addEventListener('keydown', e => { if (e.key === 'Enter') $('lSave').click(); });
+$('tTitle').addEventListener('keydown', e => { if (e.key === 'Enter') $('tSave').click(); });
+document.querySelectorAll('dialog [data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
+document.querySelectorAll('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
+
+/* =====================================================================
+   GOOGLE DISK – synchronizace úkolů
+   Přihlášení přesměrováním (funguje i v appce na ploše iPhonu), token platí hodinu.
+   Klient je stejný jako u Školy (stejný projekt v Google Cloud) – v něm musí být
+   povolená adresa přesměrování https://kudla2002.github.io/kudla/
+   ===================================================================== */
+const GCFG = {
+  clientId: '1020263773048-jvti388ggupi0k7701mqsgj89fkb1c9h.apps.googleusercontent.com',
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email',
+  file: 'Kudlife – úkoly.json',
+};
+const G = {
+  get: k => ls.get('g.' + k, null), set: (k, v) => ls.set('g.' + k, v), del: k => ls.del('g.' + k),
+  token() { const t = G.get('tok'); return t && t.exp > Date.now() + 60000 ? t.at : null; },
+  signedIn: () => !!G.get('ok'),
+  redirectUri: () => location.origin + location.pathname.replace(/index\.html$/, ''),
+  login(silent) {
+    const st = uid();
+    G.set('state', st); G.set('last', Date.now()); G.set('silent', !!silent); G.set('ret', location.hash || '');
+    const p = new URLSearchParams({ client_id: GCFG.clientId, redirect_uri: G.redirectUri(), response_type: 'token', scope: GCFG.scope, include_granted_scopes: 'true', state: st });
+    const hint = G.get('hint');
+    if (hint) p.set('login_hint', hint);
+    if (silent) p.set('prompt', 'none'); else if (!hint) p.set('prompt', 'select_account');
+    location.assign('https://accounts.google.com/o/oauth2/v2/auth?' + p);
+  },
+  handleRedirect() {
+    if (!/^#(?:.*&)?(?:access_token|error)=/.test(location.hash)) return null;
+    const p = new URLSearchParams(location.hash.slice(1));
+    const ret = G.get('ret') || ''; G.del('ret');
+    history.replaceState(null, '', location.pathname + location.search + (ret && ret !== '#' ? ret : ''));
+    if (p.get('state') !== G.get('state')) return null;
+    G.del('state');
+    const silent = !!G.get('silent');
+    if (p.get('access_token')) {
+      if (!(p.get('scope') || '').includes('drive.file')) return 'Bez oprávnění k Disku nejde synchronizovat. Přihlas se znovu a nech ho zaškrtnuté.';
+      G.set('tok', { at: p.get('access_token'), exp: Date.now() + (+p.get('expires_in') || 3600) * 1000 });
+      G.set('ok', 1);
+      return null;
+    }
+    if (silent) return null;
+    return p.get('error') === 'access_denied' ? 'Přihlášení bylo zrušeno.' : 'Google vrátil chybu: ' + p.get('error');
+  },
+  maybeRefresh() {
+    if (!G.signedIn() || G.token() || !navigator.onLine || window.top !== window) return false;
+    if (Date.now() - (G.get('last') || 0) < 5 * 60000) return false;
+    if (document.querySelector('dialog[open]')) return false;
+    G.login(true); return true;
+  },
+  logout() { ['tok', 'ok', 'fid', 'hint', 'last', 'synced'].forEach(G.del); Sync.state = 'out'; render(); renderSettings(); },
+};
+async function gfetch(url, opt = {}) {
+  const t = G.token(); if (!t) { const e = new Error('login'); e.code = 401; throw e; }
+  const r = await fetch(url, Object.assign({}, opt, { headers: Object.assign({}, opt.headers, { Authorization: 'Bearer ' + t }) }));
+  if (r.status === 401) { G.del('tok'); const e = new Error('login'); e.code = 401; throw e; }
+  if (r.status === 404) { const e = new Error('404'); e.code = 404; throw e; }
+  if (!r.ok) throw new Error('Google ' + r.status);
+  return r;
+}
+const DRV = 'https://www.googleapis.com/drive/v3/files', UPL = 'https://www.googleapis.com/upload/drive/v3/files';
+const Sync = {
+  state: 'out', busy: false, again: false, timer: null,
+  cls() { return { ok: 'ok', busy: 'ok', expired: 'warn', err: 'err' }[Sync.state] || ''; },
+  label() {
+    if (Sync.state === 'busy') return 'Synchronizuji…';
+    if (Sync.state === 'ok') { const t = G.get('synced'); return 'Na Disku · ' + (t ? new Date(t).toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }) : ''); }
+    if (Sync.state === 'expired') return 'Přihlášení k Disku vypršelo – otevři nastavení';
+    if (Sync.state === 'err') return 'Synchronizace selhala – zkusím to znovu';
+    return 'Jen v tomto zařízení';
+  },
+  soon() { clearTimeout(Sync.timer); Sync.timer = setTimeout(Sync.run, 1500); },
+  line() { const el = $('syncLine'); if (el) { el.className = 'sync ' + Sync.cls(); el.lastElementChild.textContent = Sync.label(); } renderSettings(); },
+  async run() {
+    if (!G.signedIn()) { Sync.state = 'out'; Sync.line(); return; }
+    if (!G.token()) { Sync.state = 'expired'; Sync.line(); return; }
+    if (Sync.busy) { Sync.again = true; return; }
+    Sync.busy = true; Sync.state = 'busy'; Sync.line();
+    try {
+      if (!G.get('hint')) {
+        const u = await (await gfetch('https://www.googleapis.com/oauth2/v3/userinfo')).json();
+        if (u.email) G.set('hint', String(u.email).toLowerCase());
+      }
+      let fid = G.get('fid'), remote = null;
+      if (fid) { try { remote = await (await gfetch(DRV + '/' + fid + '?alt=media')).json(); } catch (e) { if (e.code === 404) fid = null; else throw e; } }
+      if (!fid) {
+        const q = encodeURIComponent("name='" + GCFG.file + "' and trashed=false");
+        const j = await (await gfetch(DRV + '?q=' + q + '&spaces=drive&orderBy=modifiedTime%20desc&fields=files(id)')).json();
+        if (j.files && j.files[0]) { fid = j.files[0].id; remote = await (await gfetch(DRV + '/' + fid + '?alt=media')).json(); }
+      }
+      const before = JSON.stringify(D);
+      D = merge(D, remote);
+      const body = JSON.stringify(D);
+      if (!fid) {
+        const b = 'kudlife' + uid();
+        const mp = '--' + b + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify({ name: GCFG.file, mimeType: 'application/json' }) +
+          '\r\n--' + b + '\r\nContent-Type: application/json\r\n\r\n' + body + '\r\n--' + b + '--';
+        const r = await (await gfetch(UPL + '?uploadType=multipart&fields=id', { method: 'POST', headers: { 'Content-Type': 'multipart/related; boundary=' + b }, body: mp })).json();
+        fid = r.id;
+      } else if (!remote || JSON.stringify(merge(remote, {})) !== body) {
+        await gfetch(UPL + '/' + fid + '?uploadType=media', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body });
+      }
+      G.set('fid', fid); G.set('synced', Date.now());
+      ls.set(KEY, D);
+      Sync.state = 'ok';
+      if (JSON.stringify(D) !== before) render();
+    } catch (e) {
+      Sync.state = e.code === 401 ? 'expired' : 'err';
+      if (Sync.state === 'err') { clearTimeout(Sync.timer); Sync.timer = setTimeout(Sync.run, 30000); }
+    } finally {
+      Sync.busy = false; Sync.line();
+      if (Sync.again) { Sync.again = false; Sync.soon(); }
+    }
+  },
+};
+
+/* ---------- nastavení ---------- */
+function renderSettings() {
+  if (!$('setDlg').open) return;
+  const s = G.signedIn(), t = !!G.token();
+  $('gState').textContent = !s ? 'Nepřipojeno' : t ? (G.get('hint') || 'Připojeno') : 'Přihlášení vypršelo';
+  $('gLogin').hidden = s && t; $('gLogin').textContent = s ? 'Obnovit přihlášení' : 'Přihlásit přes Google';
+  $('gSync').hidden = !(s && t); $('gOut').hidden = !s;
+}
+function openSettings() { $('setDlg').showModal(); renderSettings(); }
+$('gLogin').addEventListener('click', () => G.login(false));
+$('gSync').addEventListener('click', () => Sync.run());
+$('gOut').addEventListener('click', () => { if (confirm('Odhlásit Google Disk? Úkoly v tomto zařízení zůstanou.')) G.logout(); });
+$('xExp').addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(D, null, 2)], { type: 'application/json' }));
+  a.download = 'kudlife-ukoly-' + today() + '.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+});
+$('xImp').addEventListener('click', () => $('xFile').click());
+$('xFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try { const j = JSON.parse(await f.text()); if (!Array.isArray(j.tasks)) throw 0; D = merge(D, j); persist(); toast('Záloha nahraná'); }
+  catch (x) { toast('Soubor není záloha Kudlife'); }
+  e.target.value = '';
+});
+
+/* =====================================================================
+   APPKY (přepínač nahoře)
+   ===================================================================== */
+const HOME = 'https://kudla2002.github.io';
+const APPS = {
+  pipeline: { name: 'Pipeline', url: 'https://zfpconsulting.github.io/pipeline/' },
+  skola: { name: 'Škola', url: HOME + '/skola/' },
+  finance: { name: 'Finance', url: HOME + '/PersonalFinance/' },
+};
+// na vlastní doméně (kudla2002.github.io) se odkazuje relativně, aby šlo o stejný původ
+if (location.origin === HOME) { APPS.skola.url = '/skola/'; APPS.finance.url = '/PersonalFinance/'; }
+const sameOrigin = u => new URL(u, location.href).origin === location.origin;
+
+let curApp = 'todo';
+function showApp(a, push) {
+  if (!APPS[a] && a !== 'todo') a = 'todo';
+  curApp = a;
+  document.querySelectorAll('#seg button').forEach(b => b.setAttribute('aria-current', b.dataset.app === a ? 'page' : 'false'));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + a));
+  if (a !== 'todo') mountApp(a);
+  ls.set('app', a);
+  const h = '#' + a;
+  if (location.hash !== h) history[push ? 'pushState' : 'replaceState'](null, '', h);
+  document.title = a === 'todo' ? 'Kudlife' : APPS[a].name + ' · Kudlife';
+}
+function mountApp(a) {
+  const box = $('v-' + a); if (box.dataset.m) return;
+  box.dataset.m = '1';
+  const app = APPS[a];
+  if (!sameOrigin(app.url)) {
+    // jiná doména: prohlížeč by jí ve vložení přidělil prázdné úložiště a Google přihlášení v rámečku nejde
+    box.innerHTML = '<div class="ov"><div class="card"><h3>' + esc(app.name) + '</h3><p>' + esc(app.name) + ' běží na jiné doméně (' + esc(new URL(app.url).host) + '), takže uvnitř Kudlife by neviděla tvoje data ani přihlášení. Otevře se samostatně.</p><a class="btn" href="' + esc(app.url) + '" target="_blank" rel="noopener">Otevřít ' + esc(app.name) + '</a></div></div>';
+    return;
+  }
+  box.innerHTML = '<iframe title="' + esc(app.name) + '" src="' + esc(app.url) + '" allow="clipboard-write; web-share; fullscreen"></iframe><div class="ov" data-ld><div class="spin"></div></div>';
+  const f = box.querySelector('iframe');
+  f.addEventListener('load', () => {
+    const ld = box.querySelector('[data-ld]'); if (ld) ld.remove();
+    let ok = true;
+    try { void f.contentWindow.location.href; } catch (e) { ok = false; }
+    if (!ok) {
+      // appka v rámečku odešla na přihlášení Googlu (to se v rámečku zobrazit nesmí) → dokončit v plném okně
+      const ov = document.createElement('div'); ov.className = 'ov';
+      ov.innerHTML = '<div class="card"><h3>Přihlášení do ' + esc(app.name === 'Škola' ? 'Školy' : 'Financí') + '</h3><p>Google nedovolí přihlášení uvnitř Kudlife. Dokončí se v plném okně a pak se vrátíš sem.</p><button class="btn" type="button">Pokračovat</button> <button class="btn sec" type="button" style="margin-top:8px">Zpět do appky</button></div>';
+      const [go, back] = ov.querySelectorAll('button');
+      go.onclick = () => { ss.set('kudlife.ret', location.origin + location.pathname + '#' + a); location.assign(app.url); };
+      back.onclick = () => { ov.remove(); f.src = app.url; };
+      box.appendChild(ov);
+    }
+  });
+}
+$('seg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.app === curApp && curApp === 'todo') { mobileList = false; render(); return; }
+  showApp(b.dataset.app, true);
+});
+window.addEventListener('popstate', () => showApp(location.hash.slice(1) || 'todo'));
+
+/* =====================================================================
+   START
+   ===================================================================== */
+(function boot() {
+  const err = G.handleRedirect();
+  if (window.top === window) ss.del('kudlife.ret');
+  showApp((location.hash.slice(1) || ls.get('app', 'todo')));
+  mobileList = false;
+  render();
+  if (err) toast(err);
+  if (!G.maybeRefresh()) Sync.run();
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    render();                                   // změna dne → „Dnes“ se přepočítá
+    if (!G.maybeRefresh()) Sync.run();
+  });
+  window.addEventListener('online', () => Sync.run());
+  window.addEventListener('storage', e => { if (e.key === 'kudlife.' + KEY) { D = ls.get(KEY, D); render(); } });
+  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>
+</body>
+</html>
